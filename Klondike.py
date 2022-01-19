@@ -93,10 +93,16 @@ class Pileground:
     def info(self):
         message = ""
         message += "row" + str(self.id) + ": "
+        
+        # keep the first card open
+        self.open_first_card()
         for card in self.cards:
             message += card.info() + " "
 
         return message
+
+    def open_first_card(self):
+        self.cards[0].open_card()
 
     def __del__(self):
         del self.cards
@@ -168,7 +174,6 @@ def printGame(update, context):
 
 def func(update, context):
     if update.callback_query.data == 'renew':
-        initialize_game()
         init(update, context)
     else:
         # draw a card from deck to temp zone
