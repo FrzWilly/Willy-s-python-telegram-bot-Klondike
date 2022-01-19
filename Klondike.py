@@ -176,27 +176,6 @@ def func(update, context):
         temp_zone.cards[-1].open_card()
         printGame(update, context)
 
-# initialize deck
-deck = Deck()
-
-#initialize collection zone
-
-collection_zone = []
-collection_zone = [Collection('♠'), Collection('♥'),\
-        Collection('♦'), Collection('♣')]
-
-#initialize temp zone
-temp_zone = [TempZone([])]
-
-#initialize play ground
-playground = []
-for i in range(7):
-    pile = [deck.draw()]
-    pile[0].open_card()
-    for j in range(i):
-        pile += [deck.draw()]
-    playground += [Pileground(pile, i)]
-
 def main():
 
     start_handler = CommandHandler('start', init)
