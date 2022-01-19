@@ -1,4 +1,5 @@
-from telegram.ext import Filters, Updater, CommandHandler, MessageHandler
+from telegram.ext import Filters, Updater, CommandHandler, MessageHandler, CallbackQueryHandler
+from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 import random
 
 with open('token.txt') as FILE:
@@ -42,8 +43,11 @@ class Deck:
         del self.deck[-1]
         return card
 
+    def __del__(self):
+        del self.deck
+
 # class Pile:
-#     def __init__(self, cards = []) -> None:
+#     def __init__(self, cards = []) :
 #         #cards: list of Card
 #         self.cards = cards
 
@@ -61,9 +65,13 @@ class Collection:
 
         return message
 
+    def __del__(self):
+        del self.cards
+
 class TempZone:
-    def __init__(self, cards=[]) -> None:
+    def __init__(self, cards) :
         #cards: Pile
+        self.cards = []
         self.cards = cards
 
     def info(self):
@@ -73,8 +81,11 @@ class TempZone:
 
         return message
 
+    def __del__(self):
+        del self.cards
+
 class Pileground:
-    def __init__(self, cards, gid) -> None:
+    def __init__(self, cards, gid):
         #cards: Pile
         self.cards = cards
         self.id = gid
@@ -86,6 +97,9 @@ class Pileground:
             message += card.info() + " "
 
         return message
+
+    def __del__(self):
+        del self.cards
 
 def initialize_game():
     # initialize deck
@@ -101,7 +115,7 @@ def initialize_game():
 
     #initialize temp zone
     global temp_zone
-    temp_zone = TempZone()
+    temp_zone = TempZone([])
 
     #initialize play ground
     global playground
@@ -134,12 +148,54 @@ def print_table():
 def init(update, context):
     initialize_game()
     context.bot.send_message(
-        chat_id=update.effective_chat.id, text=print_table())
+        chat_id=update.effective_chat.id, text=print_table(), reply_markup=InlineKeyboardMarkup([[
+            InlineKeyboardButton(
+                '翻牌', callback_data='draw'),
+            InlineKeyboardButton(
+                '重玩', callback_data='renew')
+        ]])
+    )
 
-def repeat(update, context):
+def printGame(update, context):
     context.bot.send_message(
-        chat_id=update.effective_chat.id, text=print_table())
+        chat_id=update.effective_chat.id, text=print_table(), reply_markup=InlineKeyboardMarkup([[
+            InlineKeyboardButton(
+                '翻牌', callback_data='draw'),
+            InlineKeyboardButton(
+                '重玩', callback_data='renew')
+        ]])
+    )
 
+def func(update, context):
+    if update.callback_query.data == 'renew':
+        initialize_game()
+        init(update, context)
+    else:
+        # draw a card from deck to temp zone
+        temp_zone.cards += [deck.draw()]
+        temp_zone.cards[-1].open_card()
+        printGame(update, context)
+
+# initialize deck
+deck = Deck()
+
+#initialize collection zone
+
+collection_zone = []
+collection_zone = [Collection('♠'), Collection('♥'),\
+        Collection('♦'), Collection('♣')]
+
+#initialize temp zone
+temp_zone = [TempZone([])]
+
+#initialize play ground
+playground = []
+for i in range(7):
+    pile = [deck.draw()]
+    pile[0].open_card()
+    for j in range(i):
+        pile += [deck.draw()]
+    playground += [Pileground(pile, i)]
 
 def main():
 
@@ -147,8 +203,11 @@ def main():
     dispatcher.add_handler(start_handler)
 
 
-    repeat_handler = MessageHandler(Filters.text & (~Filters.command), repeat)
-    dispatcher.add_handler(repeat_handler)
+    printGame_handler = MessageHandler(Filters.text & (~Filters.command), printGame)
+    dispatcher.add_handler(printGame_handler)
+
+    dispatcher.add_handler(CallbackQueryHandler(func))
+
 
     updater.start_polling()
 
