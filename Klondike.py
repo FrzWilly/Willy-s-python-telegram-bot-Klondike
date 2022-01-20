@@ -29,15 +29,6 @@ class Deck:
 
         random.shuffle(self.deck)
 
-    def print_ten_in_deck(self):
-        message = ""
-        for i in range(10):
-            message += self.deck[i].info()
-
-        random.shuffle(self.deck)
-
-        return message
-
     def draw(self):
         card = self.deck[-1]
         del self.deck[-1]
@@ -48,24 +39,10 @@ class Deck:
 
 # check if sequence of cards legal
 def check_if_legal(cards):
-    rank = 0
+    rank = cards[0].r
     for card in cards:
         if card.isopen == False:
             break
-        if card.r <= rank:
-            return False
-        rank = card.r
-
-    return True
-
-
-# check if sequence of cards legal into collection zone
-def check_if_collection_legal(cards):
-    # for card in cards:
-    #     print(card.info())
-    rank = cards[0].r
-    for card in cards:
-        # print(card.r, " ", rank)
         if card.r != rank:
             return False
         rank += 1
@@ -82,9 +59,7 @@ class Collection:
     def info(self):
         message = ""
         message += f'{self.s}({self.gid}): '
-        card_rev = self.cards.copy()
-        card_rev.reverse()
-        for card in card_rev:
+        for card in reversed(self.cards):
             message += card.info() + " "
 
         return message
@@ -103,11 +78,14 @@ class Collection:
             if card.s != self.s:
                 return False
         
-        if check_if_collection_legal(mycard):
+        if check_if_legal(mycard):
             self.cards = mycard
             return True
         else:
             return False
+
+    def done(self):
+        return len(self.cards) == 13
 
     def __del__(self):
         del self.cards
@@ -121,7 +99,7 @@ class TempZone:
 
     def info(self):
         message = f"🂠({self.gid}): "
-        for card in self.cards:
+        for card in reversed(self.cards):
             message += card.info() + " "
 
         return message
@@ -215,6 +193,38 @@ def initialize_game():
             pile += [deck.draw()]
         table += [Pileground(pile, i, 5+i)]
 
+def sample_end_game(update, context):
+    # initialize deck
+    global deck
+    deck = Deck()
+
+    #initialize table
+    global table
+    table = []
+
+    #initialize collection zone
+
+    d1 = [Card('♠', i, True) for i in range(1, 14)]
+    d2 = [Card('♥', i, True) for i in range(1, 14)]
+    d3 = [Card('♦', i, True) for i in range(1, 14)]
+    d4 = [Card('♣', i, True) for i in range(1, 14)]
+
+    table = [Collection('♠', 0, d1), Collection('♥', 1, d2),\
+         Collection('♦', 2, d3), Collection('♣', 3, d4)]
+
+    #initialize temp zone
+    table += [TempZone([], 4)]
+
+    #initialize play ground
+    for i in range(7):
+        pile = []
+        table += [Pileground(pile, i, 5+i)]
+
+    if if_game_finished():
+        game_finish_message(update, context)
+
+    printGame(update, context)
+
 def print_table():
     message = ""
 
@@ -275,12 +285,26 @@ def handle_move(update, context):
 
     return move_success
 
-    
+
+def if_game_finished():
+    for i in range(4):
+        if table[i].done() == False:
+            return False
+
+    return True
+
+def game_finish_message(update, context):
+    message = "難怪你會勝利，看來我該讓腎了\n"
+    context.bot.send_message(
+        chat_id=update.effective_chat.id, text=message,
+    )
 
 def handle_move_wrapper(update, context):
     success = handle_move(update, context)
     if success == False:
         move_fail_message(update, context)
+    if if_game_finished():
+        game_finish_message(update, context)
     printGame(update, context)
 
 def main():
@@ -290,6 +314,9 @@ def main():
 
     move_handler = CommandHandler('move', handle_move_wrapper)
     dispatcher.add_handler(move_handler)
+
+    end_handler = CommandHandler('end', sample_end_game)
+    dispatcher.add_handler(end_handler)
 
     dispatcher.add_handler(CallbackQueryHandler(func))
 
