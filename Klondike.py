@@ -24,8 +24,8 @@ class Card:
 
 class Deck:
     def __init__(self):
-        self.deck = [Card('♠', i) for i in range(1, 13)] + [Card('♥', i) for i in range(1, 13)] \
-        + [Card('♦', i) for i in range(1, 13)] + [Card('♣', i) for i in range(1, 13)]
+        self.deck = [Card('♠', i) for i in range(1, 14)] + [Card('♥', i) for i in range(1, 14)] \
+        + [Card('♦', i) for i in range(1, 14)] + [Card('♣', i) for i in range(1, 14)]
 
         random.shuffle(self.deck)
 
@@ -58,6 +58,20 @@ def check_if_legal(cards):
 
     return True
 
+
+# check if sequence of cards legal into collection zone
+def check_if_collection_legal(cards):
+    # for card in cards:
+    #     print(card.info())
+    rank = cards[0].r
+    for card in cards:
+        # print(card.r, " ", rank)
+        if card.r != rank:
+            return False
+        rank += 1
+
+    return True
+
 class Collection:
     def __init__(self, suit, gid, cards=[]):
         #cards: Pile
@@ -68,7 +82,9 @@ class Collection:
     def info(self):
         message = ""
         message += f'{self.s}({self.gid}): '
-        for card in self.cards:
+        card_rev = self.cards.copy()
+        card_rev.reverse()
+        for card in card_rev:
             message += card.info() + " "
 
         return message
@@ -78,7 +94,7 @@ class Collection:
         return []
 
     def move_into(self, cards):
-        mycard = cards + self.cards.copy()
+        mycard = self.cards.copy() + cards
         if mycard[0].r != 1:
             return False
 
@@ -87,7 +103,7 @@ class Collection:
             if card.s != self.s:
                 return False
         
-        if check_if_legal(mycard):
+        if check_if_collection_legal(mycard):
             self.cards = mycard
             return True
         else:
