@@ -193,38 +193,6 @@ def initialize_game():
             pile += [deck.draw()]
         table += [Pileground(pile, i, 5+i)]
 
-def sample_end_game(update, context):
-    # initialize deck
-    global deck
-    deck = Deck()
-
-    #initialize table
-    global table
-    table = []
-
-    #initialize collection zone
-
-    d1 = [Card('♠', i, True) for i in range(1, 14)]
-    d2 = [Card('♥', i, True) for i in range(1, 14)]
-    d3 = [Card('♦', i, True) for i in range(1, 14)]
-    d4 = [Card('♣', i, True) for i in range(1, 14)]
-
-    table = [Collection('♠', 0, d1), Collection('♥', 1, d2),\
-         Collection('♦', 2, d3), Collection('♣', 3, d4)]
-
-    #initialize temp zone
-    table += [TempZone([], 4)]
-
-    #initialize play ground
-    for i in range(7):
-        pile = []
-        table += [Pileground(pile, i, 5+i)]
-
-    if if_game_finished():
-        game_finish_message(update, context)
-
-    printGame(update, context)
-
 def print_table():
     message = ""
 
@@ -314,9 +282,6 @@ def main():
 
     move_handler = CommandHandler('move', handle_move_wrapper)
     dispatcher.add_handler(move_handler)
-
-    end_handler = CommandHandler('end', sample_end_game)
-    dispatcher.add_handler(end_handler)
 
     dispatcher.add_handler(CallbackQueryHandler(func))
 
