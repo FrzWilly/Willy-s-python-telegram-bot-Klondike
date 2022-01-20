@@ -108,6 +108,8 @@ class TempZone:
         #can only remove one card every time
         if pos > 0:
             return []
+        if len(self.cards) == 0:
+            return []
         move_card = self.cards[-1]
         del self.cards[-1]
         return [move_card]
