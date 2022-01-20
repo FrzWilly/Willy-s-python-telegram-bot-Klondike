@@ -52,14 +52,15 @@ class Deck:
 #         self.cards = cards
 
 class Collection:
-    def __init__(self, suit, cards=[]):
+    def __init__(self, suit, gid, cards=[]):
         #cards: Pile
         self.s = suit
+        self.gid = gid
         self.cards = cards
 
     def info(self):
         message = ""
-        message += self.s + ": "
+        message += f'{self.s}({self.gid}): '
         for card in self.cards:
             message += card.info() + " "
 
@@ -69,13 +70,14 @@ class Collection:
         del self.cards
 
 class TempZone:
-    def __init__(self, cards) :
+    def __init__(self, cards, gid) :
         #cards: Pile
         self.cards = []
+        self.gid = gid
         self.cards = cards
 
     def info(self):
-        message = "🂠 : "
+        message = f"🂠({self.gid}): "
         for card in self.cards:
             message += card.info() + " "
 
@@ -85,15 +87,16 @@ class TempZone:
         del self.cards
 
 class Pileground:
-    def __init__(self, cards, gid):
+    def __init__(self, cards, rowid, gid):
         #cards: Pile
         self.cards = cards
-        self.id = gid
+        self.gid = gid
+        self.id = rowid
 
     def info(self):
         message = ""
-        message += "row" + str(self.id) + ": "
-        
+        message += f"row{self.id}({self.gid}): "
+
         # keep the first card open
         self.open_first_card()
         for card in self.cards:
@@ -112,41 +115,33 @@ def initialize_game():
     global deck
     deck = Deck()
 
+    #initialize table
+    global table
+    table = []
+
     #initialize collection zone
 
-    global collection_zone
-    collection_zone = []
-    collection_zone = [Collection('♠'), Collection('♥'),\
-         Collection('♦'), Collection('♣')]
+    table = [Collection('♠', 0), Collection('♥', 1),\
+         Collection('♦', 2), Collection('♣', 3)]
 
     #initialize temp zone
-    global temp_zone
-    temp_zone = TempZone([])
+    table += [TempZone([], 4)]
 
     #initialize play ground
-    global playground
-    playground = []
     for i in range(7):
         pile = [deck.draw()]
         pile[0].open_card()
         for j in range(i):
             pile += [deck.draw()]
-        playground += [Pileground(pile, i)]
+        table += [Pileground(pile, i, 5+i)]
 
 def print_table():
     message = ""
 
-    # print collection zone
-    for i in range(4):
-        message += collection_zone[i].info() + '\n'
-
-    # print temp zone
-    message += temp_zone.info() + '\n'
-
-    # print playground zone
-    for i in range(7):
-        message += playground[i].info()
-        if i != 6:
+    # print all infos in table
+    for i in range(12):
+        message += table[i].info()
+        if i != 11:
             message += '\n'
 
     return message
@@ -177,8 +172,8 @@ def func(update, context):
         init(update, context)
     else:
         # draw a card from deck to temp zone
-        temp_zone.cards += [deck.draw()]
-        temp_zone.cards[-1].open_card()
+        table[4].cards += [deck.draw()]
+        table[4].cards[-1].open_card()
         printGame(update, context)
 
 def main():
